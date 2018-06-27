@@ -1,0 +1,37 @@
+{
+  "private": true,
+  "name": "cryptomon-listener",
+  "version": "0.0.0",
+  "description": "",
+  "scripts": {
+    "postinstall": "gulp install",
+    "test": "gulp invoke-local"
+  },
+  "author": "Giovanni Bruno <giovanni.bruno@soluzionifutura.it>",
+  "contributors": [
+    {
+      "name": "Giovanni Bruno",
+      "email": "giovanni.bruno@soluzionifutura.it"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "ssh://git-codecommit.eu-west-3.amazonaws.com/v1/repos/cryptomon-listener"
+  },
+  "license": "MIT",
+  "main": "main.js",
+  "dependencies": {
+    "aws-cwlogs": "^2.5.0",
+    "cli-color": "^1.2.0",
+    "gulp": "^3.9.1",
+    "gulp-help-doc": "^1.1.0",
+    "gulp-install": "^1.1.0",
+    "inquirer": "^5.2.0",
+    "moment": "^2.22.0",
+    "zip-dir": "^1.0.2"
+  },
+  "devDependencies": {
+    "aws-sdk": "^2.220.1",
+    "eslint": "^4.19.1"
+  }
+}
