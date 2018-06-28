@@ -65,6 +65,7 @@ exports.handler = (event, context, callback) => {
                   }
                 }
               });
+
               lambda.invoke({
                 FunctionName: 'cryptomon-images-lambda',
                 Payload: tokenId
@@ -102,6 +103,7 @@ exports.handler = (event, context, callback) => {
                 }));
             }
           });
+
           if (putParams.RequestItems['cryptomon-monsters-staging'].length !== 0)
             dynamoDB.batchWriteItem(putParams).promise()
               .then(console.log)
