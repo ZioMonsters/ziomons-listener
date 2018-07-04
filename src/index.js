@@ -16,7 +16,7 @@ const CryptoMon = new web3.eth.Contract(abi, '0x345ca3e014aaf5dca488057592ee4730
 let fromBlock = 0;
 
 exports.handler = (event, context, callback) => {
-  let toBlock;
+  /*let toBlock;
   web3.eth.getBlockNumber()
     .then(currentBlock => {
       toBlock = currentBlock;
@@ -27,7 +27,7 @@ exports.handler = (event, context, callback) => {
     })
     .then(events => {
       events
-        .reduce((acc, { returnValues: { _from, _to, _tokenId } }) => {
+        .reduce((acc, { returnValues: { _from, _tokenId } }) => {
           if (acc.includes(_tokenId))
             return acc;
           else
@@ -64,15 +64,16 @@ exports.handler = (event, context, callback) => {
                     }
                   }
                 }
-              });
-
+              });*/
               lambda.invoke({
                 FunctionName: 'cryptomon-images-lambda',
-                Payload: tokenId
+                Payload: JSON.stringify({
+                  tokenId: 2
+                })
               }).promise()
                 .then(console.log)
                 .catch(console.error);
-            } else {
+            /*} else {
               dynamoDB.getItem({
                 ConsistencyRead: true,
                 TableName: 'cryptomon-monsters-staging',
@@ -110,5 +111,5 @@ exports.handler = (event, context, callback) => {
               .catch(console.error);
         });
       fromBlock = toBlock;
-    });
+    });*/
 };
