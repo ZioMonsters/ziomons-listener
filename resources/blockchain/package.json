@@ -1,0 +1,15 @@
+{
+  "devDependencies": {
+    "cryptomon-contracts": "git+ssh://git-codecommit.eu-west-3.amazonaws.com/v1/repos/cryptomon-contracts#staging",
+    "fs-extra": "5.0.0",
+    "ganache-cli": "6.1.6",
+    "truffle": "4.1.5",
+    "truffle-contract": "3.0.4",
+    "truffle-hdwallet-provider": "0.0.3"
+  },
+  "scripts": {
+    "migrate": "node_modules/.bin/truffle migrate --network local",
+    "ganache-cli": "node_modules/.bin/ganache-cli -m \"sheriff butter head myth sea ancient smooth loud globe beauty nice large\" -l 8000000",
+    "unbox": "node_modules/.bin/truffle exec scripts/unbox.js --network local"
+  }
+}

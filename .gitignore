@@ -1,5 +1,7 @@
 node_modules/
 src/node_modules/
+resources/blockchain/build
+resources/blockchain/node_modules
 .idea/
 .credentials.json
 test-credentials.json

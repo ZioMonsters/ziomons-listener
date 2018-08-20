@@ -28,7 +28,8 @@
     "gulp-install": "^1.1.0",
     "inquirer": "^5.2.0",
     "moment": "^2.22.0",
-    "zip-dir": "^1.0.2"
+    "zip-dir": "^1.0.2",
+    "cryptomon-contracts": "git+ssh://git-codecommit.eu-west-3.amazonaws.com/v1/repos/cryptomon-contracts#staging"
   },
   "devDependencies": {
     "aws-sdk": "^2.220.1",
