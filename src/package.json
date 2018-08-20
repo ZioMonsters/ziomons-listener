@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "cryptomon-listener-${env}",
+  "name": "cryptomon-listener",
   "description": "",
   "author": "Giovanni Bruno <giovanni.bruno@soluzionifutura.it>",
   "contributors": [
