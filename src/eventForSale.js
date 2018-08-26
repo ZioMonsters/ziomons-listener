@@ -1,54 +1,54 @@
-module.exports = (CryptoMon, fromBlock, toBlock, dynamoDB) => {
-  CryptoMon.getPastEvents('ForSale', {
-    fromBlock,
-    toBlock
-  })
-    .then(events => {
-      events.reduce((acc, {returnValues: {_id, _price}}, index) => {
-        if (index % 25 === 0 && index !== 0)
-          acc.push({
-            tokenId: _id,
-            price: _price
-          });
-        else if (index + 1 % 25 === 1)
-          acc.push([]);
+const { dynamoDB } = require('./aws.js');
 
-        acc[Math.floor(index / 25)].push(event);
-        return acc;
-      }, [])
-        .forEach(eventsBlock => {
-          const putParams = {
-            RequestItems: {
-              'cryptomon-battles-staging': []
+const { promiseWaterfall } = require('./utils.js');
+const monstersTable = `cryptomon-shop-${process.env.NODE_ENV}`;
+
+module.exports = events => {
+  // qui faccio gruppi da 25
+  const groups = events.reduce((acc, { returnValues: { _id: tokenId, _price: price } }, i) => {
+    if (i % 25 === 0 && i !== 0) {
+      const index = Math.floor(i / 25);
+      acc[index] = [{ tokenId, price }];
+    } else {
+      const index = Math.trunc(i / 25);
+      acc[index].push({ tokenId, price });
+    }
+    return acc;
+  }, []);
+
+  // qui preparo le promises per la waterfall
+  const promises = groups.reduce((acc, group) => {
+    const putParams = {
+      RequestItems: {
+        [monstersTable]: []
+      }
+    };
+
+    group.forEach(({ tokenId, price }) => {
+      //costruisco la putRequest per il batch di dynamoDB
+      putParams.RequestItems[monstersTable].push({
+        PutRequest: {
+          Item: {
+            tokenId: {
+              N: tokenId.toString()
+            },
+            price: {
+              N: price.toString()
             }
-          };
+            //todo pensare a come trovarli
+            /*rarity: {
+                  S:
+                },
+                genome: {
+                  N:
+                }*/
+          }
+        }
+      });
+    });
 
-          eventsBlock.forEach(({tokenId, price}) => {
-            putParams.RequestItems['cryptomon-shop-staging'].push({
-              PutRequest: {
-                Item: {
-                  tokenId: {
-                    N: tokenId.toString()
-                  },
-                  price: {
-                    N: price.toString()
-                  }
-                  //todo pensare a come trovarli
-                  /*rarity: {
-                    S:
-                  },
-                  genome: {
-                    N:
-                  }*/
-                }
-              }
-            });
-          });
-
-          dynamoDB.batchWriteItem(putParams).promise()
-            .then(console.log)
-            .catch(console.error);
-        });
-    })
-    .catch(console.error);
+    acc.push(dynamoDB.batchWriteItem(putParams).promise());
+    return acc;
+  }, []);
+  return promiseWaterfall(promises);
 };

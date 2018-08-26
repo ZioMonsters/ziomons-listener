@@ -1,7 +1,4 @@
-const AWS = require('aws-sdk');
-const lambda = new AWS.Lambda({ region: 'eu-west-1' });
-const dynamoDB = new AWS.DynamoDB({ region: 'eu-west-3' });
-const { getContractInstance, web3 } = require("./eth.js");
+const { getContractInstance, web3:{ eth: { getBlockNumber } } } = require('./eth.js');
 
 const eventTransfer = require('./eventTransfer');
 const eventResults = require('./eventResults');
@@ -12,21 +9,47 @@ let fromBlock = 0;
 
 exports.handler = (event, context, callback) => {
   let toBlock;
-  let CryptoMon;
+  let listenerEvents;
   getContractInstance()
-    .then(contract => {
-      CryptoMon = contract;
-      return web3.eth.getBlockNumber();
+    .then(({ getPastEvents }) => {
+      listenerEvents = getPastEvents;
+      return getBlockNumber();
     })
     .then(currentBlock => {
       toBlock = currentBlock;
-      [
-        eventResults,
-        eventForSale,
-        eventSold
-      ].reduce((acc, func) => acc.then(func(CryptoMon, fromBlock, toBlock, dynamoDB)),
-        Promise.resolve(eventTransfer(CryptoMon, fromBlock, toBlock, dynamoDB, lambda)))
-        .then(() => fromBlock = toBlock);
+      return listenerEvents('Transfer', {
+        fromBlock,
+        toBlock
+      });
+    })
+    .then(eventTransfer)
+    .then(log => {
+      console.log(log);
+      return listenerEvents('ForSale', {
+        fromBlock,
+        toBlock
+      });
+    })
+    .then(eventForSale)
+    .then(log => {
+      console.log(log);
+      return listenerEvents('Results', {
+        fromBlock,
+        toBlock
+      });
+    })
+    .then(eventResults)
+    .then(log => {
+      console.log(log);
+      return listenerEvents('Sold', {
+        fromBlock,
+        toBlock
+      });
+    })
+    .then(eventSold)
+    .then(log => {
+      console.log(log);
+      fromBlock = toBlock;
     })
     .catch(console.log);
 };
