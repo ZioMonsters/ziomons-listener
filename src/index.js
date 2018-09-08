@@ -1,24 +1,40 @@
 const AWS = require("aws-sdk")
-const { getLastBlockNumber, getEvents } = require("./eth.js")
+const { contractInstance, getLastBlockNumber, getEvents } = require("./eth.js")
 const sqs = new AWS.SQS({ region: "eu-west-3" })
 const documentClient = new AWS.DynamoDB.DocumentClient({ region: "eu-west-3" })
 
-let fromBlock = 0
-
 exports.handler = (event, context, callback) => {
+  //blocco del deploydel contratto su rinkeby
+  //andra' fuori perche' si conservera' lo state
+  let fromBlock = 2946603
+
   let toBlock
   return getLastBlockNumber()
     .then(lastBlock => {
       toBlock = lastBlock
-      return getEvents({ from: fromBlock, to: lastBlock })
+      return getEvents({ from: fromBlock, to: fromBlock+50 })
     })
     .then(events => {
+      //events e' vuoto perche' nessuno sta lavorando sulla testnet per ora
       console.log("events", events)
       return Promise.all(events.reduce((acc, event) => {
+        console.log(event);
         let type
+        let params
+        let { returnValues: { Result } } = event
         switch (event.event) {
           case "Unboxed": {
             type = "unbox"
+            const { atk, def, spd, lvl, exp } = contractInstance().Monsters(Result._tokenId);
+            Result = {
+              tokenId: Result._tokenId,
+              to: Result._to,
+              atk,
+              def,
+              spd,
+              lvl,
+              exp
+            }
             break
           }
           case "Results": {
@@ -64,7 +80,6 @@ exports.handler = (event, context, callback) => {
       callback(null, event)
     })
     .catch(err => callback(err))
-
   // let toBlock
   // let listenerEvents
   //

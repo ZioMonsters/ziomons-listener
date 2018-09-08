@@ -4,7 +4,7 @@
   "description": "",
   "author": "Giovanni Bruno <giovanni.bruno@soluzionifutura.it>",
   "scripts": {
-    "deploy": "rm -rf node_modules && docker run -it --rm -v \"$PWD\":/app -w /app node:8.10 npm install && gulp update-code"
+    "deploy": "sudo rm -rf node_modules && sudo docker run -it --rm -v \"$PWD\":/app -w /app node:8.10 npm install && gulp update-code"
   },
   "contributors": [
     {
@@ -16,4 +16,4 @@
     "web3": "1.0.0-beta.26",
     "websocket": "1.0.26"
   }
-}
+}=
