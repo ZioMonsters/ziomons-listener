@@ -23,15 +23,16 @@
   "dependencies": {
     "aws-cwlogs": "^2.5.0",
     "cli-color": "^1.2.0",
+    "cryptomon-contracts": "git+ssh://git-codecommit.eu-west-3.amazonaws.com/v1/repos/cryptomon-contracts#staging",
     "gulp": "^3.9.1",
     "gulp-help-doc": "^1.1.0",
     "gulp-install": "^1.1.0",
     "inquirer": "^5.2.0",
     "moment": "^2.22.0",
-    "zip-dir": "^1.0.2",
-    "cryptomon-contracts": "git+ssh://git-codecommit.eu-west-3.amazonaws.com/v1/repos/cryptomon-contracts#staging"
+    "zip-dir": "^1.0.2"
   },
   "devDependencies": {
+    "@soluzioni-futura/eslint-config-soluzioni-futura": "^1.0.1",
     "aws-sdk": "^2.220.1",
     "eslint": "^4.19.1"
   }

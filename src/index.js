@@ -1,56 +1,113 @@
-const { getContractInstance, web3:{ eth: { getBlockNumber } } } = require('./eth.js');
+const AWS = require("aws-sdk")
+const { getLastBlockNumber, getEvents } = require("./eth.js")
+const sqs = new AWS.SQS({ region: "eu-west-3" })
+const documentClient = new AWS.DynamoDB.DocumentClient({ region: "eu-west-3" })
 
-const eventTransfer = require('./eventTransfer');
-const eventResults = require('./eventResults');
-const eventForSale = require('./eventForSale');
-const eventSold = require('./eventSold');
-
-let fromBlock = 0;
+let fromBlock = 0
 
 exports.handler = (event, context, callback) => {
-  let toBlock;
-  let listenerEvents;
-  //todo rendi asincrono il tutto
-  getContractInstance()
-    .then(({ getPastEvents }) => {
-      listenerEvents = getPastEvents;
-      return getBlockNumber();
+  let toBlock
+  return getLastBlockNumber()
+    .then(lastBlock => {
+      toBlock = lastBlock
+      return getEvents({ from: fromBlock, to: lastBlock })
     })
-    .then(currentBlock => {
-      toBlock = currentBlock;
-      return listenerEvents('Transfer', {
-        fromBlock,
-        toBlock
-      });
+    .then(events => {
+      console.log("events", events)
+      return Promise.all(events.reduce((acc, event) => {
+        let type
+        switch (event.event) {
+          case "Unboxed": {
+            type = "unbox"
+            break
+          }
+          case "Results": {
+            type = "clash"
+            break
+          }
+          case "ForSale": {
+            type = "sell"
+            break
+          }
+          case "Transfer": {
+            if (event.address !== "0x0000000000000000000000000000000000000000") {
+              type = "buy"
+            }
+            break
+          }
+          default: {
+            return acc
+          }
+        }
+        acc.push(
+          sqs.sendMessage({
+            QueueUrl: `https://sqs.eu-west-3.amazonaws.com/477398036046/cryptomon-${type}`,
+            MessageBody: JSON.stringify(event)
+          }).promise()
+        )
+        const transactionId = event.transactionHash
+        delete event.transactionHash
+        acc.push(
+          documentClient.put({
+            TableName: `cryptomon-events-${process.env.NODE_ENV}`,
+            Item: Object.assign({
+              transactionId,
+              type
+            }, event.returnValues)
+          }).promise()
+        )
+        return acc
+      }, []))
     })
-    .then(eventTransfer)
-    .then(log => {
-      console.log(log);
-      return listenerEvents('ForSale', {
-        fromBlock,
-        toBlock
-      });
+    .then(() => {
+      fromBlock = toBlock
+      callback(null, event)
     })
-    .then(eventForSale)
-    .then(log => {
-      console.log(log);
-      return listenerEvents('Results', {
-        fromBlock,
-        toBlock
-      });
-    })
-    .then(eventResults)
-    .then(log => {
-      console.log(log);
-      return listenerEvents('Sold', {
-        fromBlock,
-        toBlock
-      });
-    })
-    .then(eventSold)
-    .then(log => {
-      console.log(log);
-      fromBlock = toBlock;
-    })
-    .catch(console.log);
-};
+    .catch(err => callback(err))
+
+  // let toBlock
+  // let listenerEvents
+  //
+  // getContractInstance()
+  //   .then(({ getPastEvents }) => {
+  //     listenerEvents = getPastEvents
+  //     return getBlockNumber()
+  //   })
+  //   .then(currentBlock => {
+  //     toBlock = currentBlock
+  //     return listenerEvents("Transfer", {
+  //       fromBlock,
+  //       toBlock
+  //     })
+  //   })
+  //   .then(eventTransfer)
+  //   .then(log => {
+  //     console.log(log)
+  //     return listenerEvents("ForSale", {
+  //       fromBlock,
+  //       toBlock
+  //     })
+  //   })
+  //   .then(eventForSale)
+  //   .then(log => {
+  //     console.log(log)
+  //     return listenerEvents("Results", {
+  //       fromBlock,
+  //       toBlock
+  //     })
+  //   })
+  //   .then(eventResults)
+  //   .then(log => {
+  //     console.log(log)
+  //     return listenerEvents("Sold", {
+  //       fromBlock,
+  //       toBlock
+  //     })
+  //   })
+  //   .then(eventSold)
+  //   .then(log => {
+  //     console.log(log)
+  //     fromBlock = toBlock
+  //   })
+  //   .catch(console.log)
+}
