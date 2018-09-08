@@ -2,7 +2,7 @@
 // lo capisco perché se il from è 0x0 si tratta di un nuovo mostro
 
 const { lambda, dynamoDB } = require('./aws.js');
-const { promiseWaterfall } = require('./utils.js');
+const { promiseWaterfall, createBlocks } = require('./utils.js');
 
 const monstersTable = `cryptomon-monsters-${process.env.NODE_ENV}`;
 
@@ -10,27 +10,18 @@ module.exports = events => {
   // qui collasso gli eventi per evitare scritture inutili
   const fromByTokenId = events.reduce((acc, { returnValues: { _from, _to, _tokenId } }) => Object.assign(acc, { [_tokenId]: [_from, _to] }), {});
 
-  // qui faccio gruppi da 25
-  const groups = Object.entries(fromByTokenId).reduce((acc, [ tokenId, [from, to] ], i) => {
-    if (i % 25 === 0 && i !== 0) {
-      const index = Math.floor(i / 25);
-      acc[index] = [{ tokenId, from, to }];
-    } else {
-      const index = Math.trunc(i / 25);
-      acc[index].push({ tokenId, from, to });
-    }
-    return acc;
-  }, [[]]);
+  //qui creo i blocchi da 25
+  const blocks = createBlocks(Object.entries(fromByTokenId));
 
   // qui preparo le promises per la waterfall
-  const promises = groups.reduce((acc, group) => {
+  const promises = blocks.reduce((acc, block) => {
     const putParams = {
       RequestItems: {
         [monstersTable]: []
       }
     };
 
-    group.forEach(({ tokenId, from, to }) => {
+    block.forEach(([tokenId, [from, to]]) => {
       //stessa struttura sia quando il mostro viene sbustato sia quando viene scambiato tra users
       const sample = {
         putRequest: {

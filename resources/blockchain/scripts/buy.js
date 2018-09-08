@@ -1,7 +1,7 @@
 const Contract = require('truffle-contract');
 const { abi } = require('cryptomon-contracts/build/contracts/CryptoMon.json');
 
-const network = 'http://127.0.0.1:8545';
+const networks = require('../build/state/tokenAddress.json');
 
 const Token = Contract({ abi });
 
@@ -12,9 +12,9 @@ module.exports = callback => {
   const { address } = networks[web3.version.network];
 
   Token.at(address).then(contractInstance =>
-    contractInstance.balanceOf.call(web3.eth.accounts[0])
+    contractInstance.buyMonster.call(1) //id mostro
   )
-    .then(balance => { console.log('Account', address, 'has', balance.toString(), 'tokens'); })
+    .then(txHash => console.log('Success', txHash))
     .then(callback())
     .catch(console.error);
 };

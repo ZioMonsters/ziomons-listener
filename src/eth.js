@@ -17,7 +17,6 @@ if (isLambda) {
   networks = require('../resources/blockchain/build/state/tokenAddress.json');
 }
 
-
 e.getContractInstance = () => {
   return web3.eth.net.getId()
     .then(networkId => {

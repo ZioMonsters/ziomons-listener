@@ -10,6 +10,7 @@ let fromBlock = 0;
 exports.handler = (event, context, callback) => {
   let toBlock;
   let listenerEvents;
+  //todo rendi asincrono il tutto
   getContractInstance()
     .then(({ getPastEvents }) => {
       listenerEvents = getPastEvents;
