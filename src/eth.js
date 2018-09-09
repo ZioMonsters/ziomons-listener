@@ -8,7 +8,7 @@ const { abi } = require("./CryptoMon.json")
 
 const contractAddress = "0x76C6bA0CF7a5031A895d7DC57272DaC903d69647"
 
-const contract = new web3.eth.Contract(abi, contractAddress)//, { gas: 8000000 })
+const contract = new web3.eth.Contract(abi, contractAddress, { gas: 8000000 })//, { gas: 8000000 })
 
 e.contractInstance = () => contract;
 
@@ -18,4 +18,4 @@ e.getLastBlockNumber = () => {
     //.catch(console.error)
 }
 
-e.getEvents = ({ from, to }) => contract.getPastEvents("allEvents", { fromBlock: from, toBlock: to })
+e.getEvents = (params) => contract.getPastEvents("Unboxed", params)
