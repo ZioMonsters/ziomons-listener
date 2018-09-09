@@ -12,7 +12,7 @@ exports.handler = (_, context, callback) => {
   return getLastBlockNumber()
     .then(lastBlock => {
       toBlock = lastBlock
-      return getEvents({ fromBlock, toBlock: fromBlock+1 })
+      return getEvents({ fromBlock, toBlock: fromBlock+10 })
     })
     .then(events => {
       //events e' vuoto perche' nessuno sta lavorando sulla testnet per ora
