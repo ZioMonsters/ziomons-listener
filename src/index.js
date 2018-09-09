@@ -6,13 +6,13 @@ const documentClient = new AWS.DynamoDB.DocumentClient({ region: "eu-west-3" })
 exports.handler = (_, context, callback) => {
   //blocco del deploydel contratto su rinkeby
   //andra' fuori perche' si conservera' lo state
-  let fromBlock = 2955488
+  let fromBlock = 2955454
 
   let toBlock
   return getLastBlockNumber()
     .then(lastBlock => {
       toBlock = lastBlock
-      return getEvents({ fromBlock, toBlock: fromBlock+10 })
+      return getEvents({ fromBlock, toBlock: fromBlock+50 })
     })
     .then(events => {
       //events e' vuoto perche' nessuno sta lavorando sulla testnet per ora
