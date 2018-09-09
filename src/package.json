@@ -13,6 +13,7 @@
     }
   ],
   "dependencies": {
+    "array-flatten": "^2.1.1",
     "web3": "1.0.0-beta.26",
     "websocket": "1.0.26"
   }
