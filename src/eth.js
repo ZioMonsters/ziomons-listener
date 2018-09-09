@@ -18,4 +18,4 @@ e.getLastBlockNumber = () => {
     //.catch(console.error)
 }
 
-e.getEvents = (params) => contract.getPastEvents("Unboxed", params)
+e.getEvents = (event, params) => contract.getPastEvents(event, params)
