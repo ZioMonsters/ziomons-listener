@@ -2,14 +2,14 @@ const AWS = require("aws-sdk")
 const { contractInstance, getLastBlockNumber, getEvents } = require("./eth.js")
 const sqs = new AWS.SQS({ region: "eu-west-3" })
 const documentClient = new AWS.DynamoDB.DocumentClient({ region: "eu-west-3" })
-//const uuid = require()
+const uuidv1 = require("uuid/v1")
 
 exports.handler = (_, context, callback) => {
   //blocco del deploydel contratto su rinkeby
   //andra' fuori perche' si conservera' lo state
 
-  let fromBlock = 2955454
-  let allEvents = ["Unboxed"]/*, "ForSale", "Transfer", "Results", "Upgraded"]*/
+  const fromBlock = 2957160
+  const allEvents = ["Unboxed"]/*, "ForSale", "Transfer", "Results", "Upgraded"]*/
   let toBlock
   return getLastBlockNumber()
     .then(lastBlock => {
@@ -19,68 +19,66 @@ exports.handler = (_, context, callback) => {
       )
     })
     .then(groupEvents => {
-      console.log('step1', groupEvents)
-      const groupParams = [];
+      const groupParams = []
       groupEvents.map(events => {
-        console.log('events', events)
-        switch (events[0].event) {
-          case "Unboxed":
-            const params = events.map(event => {
-              console.log('event', event)
-              const {returnValues: { Result }} = event;
-              const { _player, _ids } = Result
-              const {atk, def, spd, lvl, exp, rarity} = contractInstance().Monsters(Result._tokenId);
-              return {
-                tokenId: Result._tokenId,
-                to: Result._to,
-                atk,
-                def,
-                spd,
-                lvl,
-                exp,
-                rarity
-              }
+        console.log(events)
+        const[{ event }] = events
+        if(event === "Unbox") {
+          events.map(({ returnValues: { _player, _ids } }) => {
+            console.log("ids:", _ids)
+            _ids.forEach(id => {
+              contractInstance().methods.monsters(id).call()
+                .then(({ atk, def, spd, lvl, exp, rarity }) => {
+                  console.log("id", id)
+                  groupParams.push({
+                    tokenId: id,
+                    to: _player,
+                    atk,
+                    def,
+                    spd,
+                    lvl,
+                    exp,
+                    rarity,
+                    transactionId: uuidv1()
+                  })
+                  console.log(groupParams, "ciao")
+                })
+                .catch(console.error)
             })
-            groupParams.push(params);
-            break
-          case "Forsale":
-            groupParams.push(events.map(event => {
-              const {returnValues: {Result}} = event;
+          })
+        } else if(event === "Forsale") {
+          groupParams.push(events.map(event => {
+            const { returnValues: { Result } } = event
+            return Result
+          }))
+        } else if(event === "Transfer") {
+          groupParams.push(events.map(event => {
+            const { returnValues: { Result } } = event
+            if (Result._from.substr(0, 3) !== "0x0") {
               return Result
-            }))
-            break
-          case "Transfer":
-            groupParams.push(events.map(event => {
-              const {returnValues: {Result}} = event;
-              if (Result._from.substr(0, 3) !== '0x0') {
-                return Result
-              }
-            }))
-            break
-          default:
-            groupParams.push(events.map(event => {
-              const {returnValues: {Result}} = event;
-              return Result
-            }))
-            break
+            }
+          }))
+        } else {
+          groupParams.push(events.map(event => {
+            const { returnValues: { Result } } = event
+            return Result
+          }))
         }
         groupParams.forEach((params, index) => {
-          params.forEach(e => {
-            console.log(e)
-            /*sqs.sendMessage({
-              QueueUrl: `https://sqs.eu-west-3.amazonaws.com/477398036046/cryptomon-${allEvents[index]}`,
-              MessageBody: JSON.stringify(e)
-            }).promise()
-              .then(console.log)
-              .catch(console.error)*/
-          })
-
+          console.log("params", params)
+          sqs.sendMessage({
+            QueueUrl: `https://sqs.eu-west-3.amazonaws.com/477398036046/cryptomon-${allEvents[index]}`,
+            MessageBody: JSON.stringify(params)
+          }).promise()
+            .then(console.log)
+            .catch(console.error)
         })
 
       })
+
     })
 }
-      /*
+/*
       let params = []
 
       groupEvents.forEach((events, index) => {
