@@ -1,7 +1,6 @@
 const AWS = require("aws-sdk")
 const { contractInstance, getLastBlockNumber, getEvents } = require("./eth.js")
 const sqs = new AWS.SQS({ region: "eu-west-3" })
-const documentClient = new AWS.DynamoDB.DocumentClient({ region: "eu-west-3" })
 const uuidv1 = require("uuid/v1")
 const flatten = require("array-flatten")
 
@@ -9,17 +8,17 @@ const eventsQueueNameParser = {
   "Unboxed": "unbox"
 }
 
-let toBlock
+let fromBlock = 2956160
 exports.handler = (_, context, callback) => {
   //blocco del deploydel contratto su rinkeby
   //andra' fuori perche' si conservera' lo state
 
-  const fromBlock = 2956160
+  let lastBlockExamined
   const allEvents = ["Unboxed"]
   /*, "ForSale", "Transfer", "Results", "Upgraded"]*/
   return getLastBlockNumber()
     .then(lastBlock => {
-      toBlock = lastBlock
+      lastBlockExamined = lastBlock
       return Promise.all(
         allEvents.map(eventName => {
           return getEvents(eventName, { fromBlock, toBlock: lastBlock })
@@ -50,7 +49,6 @@ exports.handler = (_, context, callback) => {
       }, {})
 
       return Promise.all(Object.entries(filteredMessages).map(([eventName, messages]) => {
-
         return sqs.sendMessage({
           QueueUrl: `https://sqs.eu-west-3.amazonaws.com/477398036046/cryptomon-${eventsQueueNameParser[eventName]}`,
           MessageBody: JSON.stringify(messages)
@@ -58,9 +56,9 @@ exports.handler = (_, context, callback) => {
       }))
 
     })
-    .then(sqsResponses => callback(null, sqsResponses))
-    .catch(err => {
-      console.log("error")
-      console.log(err)
+    .then(sqsResponses => {
+      fromBlock = lastBlockExamined
+      callback(null, sqsResponses)
     })
+    .catch(err => callback(err))
 }
