@@ -31,7 +31,7 @@ exports.handler = (_, context, callback) => {
         return events.map(({ returnValues: { _player, _ids } }) => {
           return _ids.map(id => {
             return contractInstance().methods.monsters(id).call()
-              .then(data => ({ _player, ...data, eventName, transactionId: uuidv1() }))
+              .then(data => ({ monsterId: id, _player, ...data, eventName, transactionId: uuidv1() }))
           })
         })
       })))
