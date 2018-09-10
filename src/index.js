@@ -47,9 +47,9 @@ exports.handler = (_, context, callback) => {
 
         return acc
       }, {})
-
+      
       return Promise.all(Object.entries(filteredMessages).map(([eventName, messages]) => {
-        return sqs.sendMessage({
+       return sqs.sendMessage({
           QueueUrl: `https://sqs.eu-west-3.amazonaws.com/477398036046/cryptomon-${eventsQueueNameParser[eventName]}`,
           MessageBody: JSON.stringify(messages)
         }).promise()
